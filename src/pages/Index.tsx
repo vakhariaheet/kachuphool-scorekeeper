@@ -4,8 +4,9 @@ import { GameHeader } from "@/components/GameHeader";
 import { BiddingRound } from "@/components/BiddingRound";
 import { TricksRound } from "@/components/TricksRound";
 import { ScoreDisplay } from "@/components/ScoreDisplay";
+import { ResultsPage } from "@/components/ResultsPage";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy } from "lucide-react";
 
 interface Player {
   id: string;
@@ -17,15 +18,31 @@ interface Player {
   roundScore?: number;
 }
 
+interface RoundResult {
+  round: number;
+  cards: number;
+  trump: string;
+  results: {
+    playerId: string;
+    name: string;
+    color: string;
+    bid: number;
+    tricks: number;
+    roundScore: number;
+    totalScore: number;
+  }[];
+}
+
 const roundStructure = [1,2,3,4,5,6,7,8,7,6,5,4,3,2,1];
 const trumpRotation = ['spades', 'diamonds', 'clubs', 'hearts'];
 
 const Index = () => {
-  const [gameState, setGameState] = useState<'setup' | 'bidding' | 'tricks' | 'scores'>('setup');
+  const [gameState, setGameState] = useState<'setup' | 'bidding' | 'tricks' | 'scores' | 'results'>('setup');
   const [players, setPlayers] = useState<Player[]>([]);
   const [scoringSystem, setScoringSystem] = useState<'standard' | 'multiplier'>('standard');
   const [currentRound, setCurrentRound] = useState(1);
   const [trumpSuit, setTrumpSuit] = useState(trumpRotation[0]);
+  const [roundsHistory, setRoundsHistory] = useState<RoundResult[]>([]);
 
   const startGame = (playerList: Player[], scoring: 'standard' | 'multiplier') => {
     setPlayers(playerList);
@@ -72,6 +89,24 @@ const Index = () => {
   };
 
   const nextRound = () => {
+    // Save current round results to history
+    const roundResult: RoundResult = {
+      round: currentRound,
+      cards: roundStructure[currentRound - 1],
+      trump: trumpSuit,
+      results: players.map(p => ({
+        playerId: p.id,
+        name: p.name,
+        color: p.color,
+        bid: p.currentBid || 0,
+        tricks: p.currentTricks || 0,
+        roundScore: p.roundScore || 0,
+        totalScore: p.totalScore + (p.roundScore || 0)
+      }))
+    };
+    
+    setRoundsHistory(prev => [...prev, roundResult]);
+    
     // Add round scores to total scores
     setPlayers(players.map(p => ({
       ...p,
@@ -95,6 +130,19 @@ const Index = () => {
     setPlayers([]);
     setCurrentRound(1);
     setTrumpSuit(trumpRotation[0]);
+    setRoundsHistory([]);
+  };
+
+  const viewResults = () => {
+    setGameState('results');
+  };
+
+  const backToGame = () => {
+    if (isGameComplete) {
+      setGameState('scores');
+    } else {
+      setGameState('scores');
+    }
   };
 
   if (gameState === 'setup') {
@@ -114,23 +162,35 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={resetGame}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              New Game
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={nextTrump}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Next Trump
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={resetGame}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                New Game
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={nextTrump}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Next Trump
+              </Button>
+            </div>
+            {roundsHistory.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={viewResults}
+                className="flex items-center gap-2"
+              >
+                <Trophy className="h-4 w-4" />
+                Results ({roundsHistory.length})
+              </Button>
+            )}
           </div>
 
           <GameHeader
@@ -156,23 +216,35 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={resetGame}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              New Game
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setGameState('bidding')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Bids
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={resetGame}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                New Game
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setGameState('bidding')}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Bids
+              </Button>
+            </div>
+            {roundsHistory.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={viewResults}
+                className="flex items-center gap-2"
+              >
+                <Trophy className="h-4 w-4" />
+                Results ({roundsHistory.length})
+              </Button>
+            )}
           </div>
 
           <GameHeader
@@ -198,7 +270,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={resetGame}
@@ -206,6 +278,14 @@ const Index = () => {
             >
               <ArrowLeft className="h-4 w-4" />
               New Game
+            </Button>
+            <Button
+              variant="outline"
+              onClick={viewResults}
+              className="flex items-center gap-2"
+            >
+              <Trophy className="h-4 w-4" />
+              View Results
             </Button>
           </div>
 
@@ -226,6 +306,20 @@ const Index = () => {
           />
         </div>
       </div>
+    );
+  }
+
+  // Results Page
+  if (gameState === 'results') {
+    return (
+      <ResultsPage
+        players={players}
+        roundsHistory={roundsHistory}
+        onBackToGame={backToGame}
+        onNewGame={resetGame}
+        isGameComplete={isGameComplete}
+        scoringSystem={scoringSystem}
+      />
     );
   }
 
