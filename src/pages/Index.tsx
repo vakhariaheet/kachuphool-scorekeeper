@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { GameSetup } from "@/components/GameSetup";
 import { GameHeader } from "@/components/GameHeader";
-import { PlayerCard } from "@/components/PlayerCard";
+import { BiddingRound } from "@/components/BiddingRound";
+import { TricksRound } from "@/components/TricksRound";
+import { ScoreDisplay } from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 
 interface Player {
@@ -20,7 +21,7 @@ const roundStructure = [1,2,3,4,5,6,7,8,7,6,5,4,3,2,1];
 const trumpRotation = ['spades', 'diamonds', 'clubs', 'hearts'];
 
 const Index = () => {
-  const [gameState, setGameState] = useState<'setup' | 'playing'>('setup');
+  const [gameState, setGameState] = useState<'setup' | 'bidding' | 'tricks' | 'scores'>('setup');
   const [players, setPlayers] = useState<Player[]>([]);
   const [scoringSystem, setScoringSystem] = useState<'standard' | 'multiplier'>('standard');
   const [currentRound, setCurrentRound] = useState(1);
@@ -29,7 +30,7 @@ const Index = () => {
   const startGame = (playerList: Player[], scoring: 'standard' | 'multiplier') => {
     setPlayers(playerList);
     setScoringSystem(scoring);
-    setGameState('playing');
+    setGameState('bidding');
     setCurrentRound(1);
   };
 
@@ -62,6 +63,14 @@ const Index = () => {
     }));
   };
 
+  const confirmBids = () => {
+    setGameState('tricks');
+  };
+
+  const confirmTricks = () => {
+    setGameState('scores');
+  };
+
   const nextRound = () => {
     // Add round scores to total scores
     setPlayers(players.map(p => ({
@@ -74,7 +83,10 @@ const Index = () => {
     
     if (currentRound < roundStructure.length) {
       setCurrentRound(currentRound + 1);
+      setGameState('bidding');
       nextTrump();
+    } else {
+      setGameState('scores'); // Show final results
     }
   };
 
@@ -95,90 +107,132 @@ const Index = () => {
     );
   }
 
-  const canProgressRound = players.every(p => 
-    p.currentBid !== undefined && p.currentTricks !== undefined
-  );
-  const isGameComplete = currentRound >= roundStructure.length;
+  const isGameComplete = currentRound > roundStructure.length;
+
+  // Bidding Phase
+  if (gameState === 'bidding') {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={resetGame}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              New Game
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={nextTrump}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Next Trump
+            </Button>
+          </div>
+
+          <GameHeader
+            currentRound={currentRound}
+            totalRounds={roundStructure.length}
+            trumpSuit={trumpSuit}
+            scoringSystem={scoringSystem}
+          />
+
+          <BiddingRound
+            players={players}
+            onUpdateBid={updatePlayerBid}
+            onConfirmBids={confirmBids}
+            currentRound={currentRound}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Tricks Phase
+  if (gameState === 'tricks') {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={resetGame}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              New Game
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setGameState('bidding')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Bids
+            </Button>
+          </div>
+
+          <GameHeader
+            currentRound={currentRound}
+            totalRounds={roundStructure.length}
+            trumpSuit={trumpSuit}
+            scoringSystem={scoringSystem}
+          />
+
+          <TricksRound
+            players={players}
+            onUpdateTricks={updatePlayerTricks}
+            onConfirmTricks={confirmTricks}
+            currentRound={currentRound}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Scores Phase
+  if (gameState === 'scores') {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={resetGame}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              New Game
+            </Button>
+          </div>
+
+          <GameHeader
+            currentRound={currentRound}
+            totalRounds={roundStructure.length}
+            trumpSuit={trumpSuit}
+            scoringSystem={scoringSystem}
+          />
+
+          <ScoreDisplay
+            players={players}
+            onNextRound={nextRound}
+            onEndGame={resetGame}
+            currentRound={currentRound}
+            totalRounds={roundStructure.length}
+            isGameComplete={isGameComplete}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={resetGame}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            New Game
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={nextTrump}
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Next Trump
-          </Button>
-        </div>
-
-        <GameHeader
-          currentRound={currentRound}
-          totalRounds={roundStructure.length}
-          trumpSuit={trumpSuit}
-          scoringSystem={scoringSystem}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {players.map(player => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              onUpdateBid={(bid) => updatePlayerBid(player.id, bid)}
-              onUpdateTricks={(tricks) => updatePlayerTricks(player.id, tricks)}
-              isRoundActive={!isGameComplete}
-            />
-          ))}
-        </div>
-
-        {!isGameComplete && canProgressRound && (
-          <Card className="p-4 text-center">
-            <Button
-              onClick={nextRound}
-              className="bg-gradient-primary hover:bg-primary-glow text-white"
-              size="lg"
-            >
-              Next Round ({currentRound + 1}/{roundStructure.length})
-            </Button>
-          </Card>
-        )}
-
-        {isGameComplete && (
-          <Card className="p-6 text-center bg-gradient-gold">
-            <h2 className="text-2xl font-bold mb-4">Game Complete!</h2>
-            <div className="space-y-2 mb-4">
-              <h3 className="font-semibold">Final Scores:</h3>
-              {players
-                .sort((a, b) => b.totalScore - a.totalScore)
-                .map((player, index) => (
-                  <div key={player.id} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono text-sm">#{index + 1}</span>
-                      <div 
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: player.color }}
-                      />
-                      {player.name}
-                    </span>
-                    <span className="font-mono font-bold">{player.totalScore}</span>
-                  </div>
-                ))}
-            </div>
-            <Button onClick={resetGame} variant="secondary">
-              Play Again
-            </Button>
-          </Card>
-        )}
+      <div className="max-w-4xl mx-auto py-8">
+        <GameSetup onStartGame={startGame} />
       </div>
     </div>
   );
