@@ -60,7 +60,7 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
     <div className="max-w-2xl mx-auto space-y-6">
       <Card className="p-6 bg-gradient-card shadow-card">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Kachuphool Setup</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Kachuphool Scorer</h1>
           <p className="text-muted-foreground">Configure your Judgment game</p>
         </div>
 
@@ -78,14 +78,14 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
               <SelectContent>
                 <SelectItem value="standard">
                   <div className="text-left">
-                    <div className="font-medium">Standard</div>
-                    <div className="text-xs text-muted-foreground">10 + bid amount for exact bids</div>
+                    <div className="font-medium text-foreground">Standard</div>
+                    <div className="text-xs text-foreground/70">10 + bid amount for exact bids</div>
                   </div>
                 </SelectItem>
                 <SelectItem value="multiplier">
                   <div className="text-left">
-                    <div className="font-medium">Multiplier</div>
-                    <div className="text-xs text-muted-foreground">Add "0" to bid (1→11, 0→10)</div>
+                    <div className="font-medium text-foreground">Multiplier</div>
+                    <div className="text-xs text-foreground/70">Add "0" to bid (1→11, 0→10)</div>
                   </div>
                 </SelectItem>
               </SelectContent>

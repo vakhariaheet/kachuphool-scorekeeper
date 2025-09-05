@@ -3,6 +3,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+const suitSymbols = {
+  spades: '♠',
+  hearts: '♥',
+  diamonds: '♦',
+  clubs: '♣'
+};
+
+const suitColors = {
+  spades: 'text-suits-spade',
+  hearts: 'text-suits-heart',  
+  diamonds: 'text-suits-diamond',
+  clubs: 'text-suits-club'
+};
+
+const suitBackgrounds = {
+  spades: 'bg-slate-100 dark:bg-slate-800',
+  hearts: 'bg-red-50 dark:bg-red-900/20',
+  diamonds: 'bg-red-50 dark:bg-red-900/20',
+  clubs: 'bg-slate-100 dark:bg-slate-800'
+};
+
 interface Player {
   id: string;
   name: string;
@@ -23,12 +44,30 @@ export function TricksRound({ players, onUpdateTricks, onConfirmTricks, currentR
   const allTricksEntered = players.every(p => p.currentTricks !== undefined);
   const roundStructure = [1,2,3,4,5,6,7,8,7,6,5,4,3,2,1];
   const maxCards = roundStructure[currentRound - 1];
+  
+  const totalTricks = players.reduce((sum, p) => sum + (p.currentTricks || 0), 0);
+  const tricksEqualCards = totalTricks === maxCards;
+  const canConfirmTricks = allTricksEntered && tricksEqualCards;
 
   return (
     <div className="space-y-6">
       <Card className="p-4 text-center bg-gradient-card shadow-card">
         <h2 className="text-xl font-semibold mb-2">Tricks Phase</h2>
-        <p className="text-muted-foreground">Enter tricks won after playing the round</p>
+        <p className="text-foreground/70">Enter tricks won after playing the round</p>
+        <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+          <span className="text-foreground/80">Total Tricks: <strong className="text-foreground">{totalTricks}</strong></span>
+          <span className="text-foreground/80">Cards: <strong className="text-foreground">{maxCards}</strong></span>
+          {allTricksEntered && !tricksEqualCards && (
+            <Badge variant="destructive" className="text-xs">
+              Total tricks must equal cards dealt!
+            </Badge>
+          )}
+          {tricksEqualCards && allTricksEntered && (
+            <Badge variant="default" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              ✓ Tricks match cards
+            </Badge>
+          )}
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -51,14 +90,14 @@ export function TricksRound({ players, onUpdateTricks, onConfirmTricks, currentR
 
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Bid:</span>
+                <span className="text-foreground/70">Bid:</span>
                 <Badge variant="outline" className="font-mono">
                   {player.currentBid}
                 </Badge>
               </div>
               
               <div className="space-y-2">
-                <label className="text-xs text-muted-foreground block">Tricks Won (0-{maxCards})</label>
+                <label className="text-xs text-foreground/70 block font-medium">Tricks Won (0-{maxCards})</label>
                 <Input
                   type="number"
                   min="0"
@@ -80,9 +119,18 @@ export function TricksRound({ players, onUpdateTricks, onConfirmTricks, currentR
             onClick={onConfirmTricks}
             className="bg-gradient-primary hover:bg-primary-glow text-white"
             size="lg"
+            disabled={!canConfirmTricks}
           >
-            Calculate Scores
+            {!tricksEqualCards ? 
+              `Adjust Tricks - Total Must Equal ${maxCards}!` : 
+              "Calculate Scores"
+            }
           </Button>
+          {!tricksEqualCards && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Rule: The total tricks won must equal the number of cards dealt ({maxCards}).
+            </p>
+          )}
         </Card>
       )}
     </div>
